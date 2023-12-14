@@ -1,103 +1,116 @@
 #include "shell.h"
 
 /**
- * _eputs - outputs a given input string.
- * @str: The string to be printed
+ * _myenv - Displays the current environment variables
+ * @info: A structure containing potential arguments. This structure helps-
+ *        maintain a constant function prototype
  *
- * This function is used to display the provided string as output
+ * This function is responsible for showing the current environment variables
  *
- * Return: Nothing
+ * Return: Always returns 0
  */
 
-void _eputs(char *str)
+int _myenv(info_t *info)
 {
-	int i = 0;
-
-	if (!str)
-		return;
-	while (str[i] != '\0')
-	{
-		_eputchar(str[i]);
-		i++;
-	}
+	print_list_str(info->env);
+	return (0);
 }
 
 /**
- * _eputchar - writes the character c to the standard error stream (stderr)
- * @c: The character to be printed
+ * _getenv - Retrieves the value of an environment variable.
+ * @info: A structure containing potential arguments. This structure helps
+ *        maintain a consistent function prototype.
+ * @name: The name of the environment variable.
  *
- * This function writes the provided character to the stderr stream firstly.
- * If the buffer is full or a special flush character is encountered,
- * the buffer is then written to stderr.
+ * This function is used to fetch the value associated with a
+ * given environment variable.
  *
- * Return: on success, it returns 1. On error, -1 is returned, and the errno
- *         variable is set accordingly.
+ * Return: The value of the specified environment variable.
  */
 
-int _eputchar(char c)
+char *_getenv(info_t *info, const char *name)
 {
-	static int i;
-	static char buf[WRITE_BUF_SIZE];
+	list_t *node = info->env;
+	char *p;
 
-	if (c == BUF_FLUSH || i >= WRITE_BUF_SIZE)
+	while (node)
 	{
-	write(2, buf, i);
-	i = 0;
+		p = starts_with(node->str, name);
+		if (p && *p)
+			return (p);
+		node = node->next;
 	}
-	if (c != BUF_FLUSH)
-		buf[i++] = c;
-	return (1);
-}
-/**
- * _putfd - writes the character c to the specified file descriptor (fd)
- * @c: The character to be printed
- * @fd: The file descriptor to write to
- *
- * This function writes the provided character to
- * the specified file descriptor.
- * If the buffer is full or a flush condition was met,
- * the buffer is written to
- * the file descriptor.
- *
- * Return: on success, it returns 1. On error, -1 is returned, and the errno
- *         variable is set accordingly.
- */
-
-int _putfd(char c, int fd)
-{
-	static int i;
-	static char buf[WRITE_BUF_SIZE];
-
-	if (c == BUF_FLUSH || i >= WRITE_BUF_SIZE)
-	{
-		write(fd, buf, i);
-		i = 0;
-	}
-	if (c != BUF_FLUSH)
-		buf[i++] = c;
-	return (1);
+	return (NULL);
 }
 
 /**
- * _putsfd - writes the input string to the specified file descriptor (fd).
- * @str: The string to be printed
- * @fd: The file descriptor to write in
+ * _mysetenv - Initialize a new environment variable or
+ * update an existing one.
+ * @info: A structure containing potential arguments. This structure ensures
+ *        a consistent function prototype.
  *
- * This function output the provided string to the specified file descriptor.
- * It returns the number of characters written.
+ * This function is responsible for initializing a new environment variable
+ * or modifying an existing one. It always returns 0.
  *
- * Return: the number of characters written
+ * Return: Always returns 0.
  */
 
-int _putsfd(char *str, int fd)
+int _mysetenv(info_t *info)
 {
-	int i = 0;
-
-	if (!str)
+	if (info->argc != 3)
+	{
+		_eputs("Incorrect number of arguements\n");
+		return (1);
+	}
+	if (_setenv(info, info->argv[1], info->argv[2]))
 		return (0);
-	while (*str)
+	return (1);
+}
+
+/**
+ * _myunsetenv - Delete an environment variable.
+ * @info: A structure containing potential arguments. This structure helps
+ *        maintain a constant function prototype.
+ *
+ * This function is utilized to remove an existing environment variable.
+ * It always returns 0.
+ *
+ * Return: Always returns 0.
+ */
+
+int _myunsetenv(info_t *info)
+{
+	int i;
+
+	if (info->argc == 1)
 	{
-		i += _putfd(*str++, fd);
+		_eputs("Too few arguements.\n");
+		return (1);
 	}
-	return (i);
+	for (i = 1; i <= info->argc; i++)
+		_unsetenv(info, info->argv[i]);
+
+	return (0);
+}
+
+/**
+ * populate_env_list - Fills a linked list with environment variable data.
+ * @info: A structure containing potential arguments. This structure ensures
+ *        a consistent function prototype.
+ *
+ * This function is responsible for populating a linked list with data from
+ * environment variables. It always returns 0.
+ *
+ * Return: Always returns 0.
+ */
+
+int populate_env_list(info_t *info)
+{
+	list_t *node = NULL;
+	size_t i;
+
+	for (i = 0; environ[i]; i++)
+		add_node_end(&node, environ[i], 0);
+	info->env = node;
+	return (0);
 }

@@ -1,192 +1,93 @@
 #include "shell.h"
 
 /**
- * input_buf - buffers chained commands.
- * @info: a parameter struct.
- * @buf: The address of the buffer
- * @len: the address of the length variables.
+ * _strncpy - Copies a string
+ * @dest: The destination string to copy to
+ * @src: The source string
+ * @n: The number of characters to copy
  *
- * This function is responsible for buffering chained commands.
- * It reads inputinto the provided buffer and updates the length.
- * variable accordingly. It returns
- * the number of bytes read.
+ * This function copies up to 'n' characters from the source string to the-
+ * destination string. It returns the modified destination string
  *
- * Return: The number of bytes read
+ * Return: The concatenated string
  */
 
-ssize_t input_buf(info_t *info, char **buf, size_t *len)
+char *_strncpy(char *dest, char *src, int n)
 {
-	ssize_t r = 0;
-	size_t len_p = 0;
+	int i, j;
+	char *s = dest;
 
-	if (!*len) /* if nothing left in the buffer, fill it */
+	i = 0;
+	while (src[i] != '\0' && i < n - 1)
 	{
-		/*bfree((void **)info->cmd_buf);*/
-		free(*buf);
-		*buf = NULL;
-		signal(SIGINT, sigintHandler);
-#if USE_GETLINE
-		r = getline(buf, &len_p, stdin);
-#else
-		r = _getline(info, buf, &len_p);
-#endif
-		if (r > 0)
-		{
-			if ((*buf)[r - 1] == '\n')
-			{
-				(*buf)[r - 1] = '\0'; /* remove trailing newline */
-				r--;
-			}
-			info->linecount_flag = 1;
-			remove_comments(*buf);
-			build_history_list(info, *buf, info->histcount++);
-			/* if (_strchr(*buf, ';')) is this a command chain? */
-			{
-				*len = r;
-				info->cmd_buf = buf;
-			}
-		}
+		dest[i] = src[i];
+		i++;
 	}
-	return (r);
-}
-
-/**
- * get_input - retrieves a line without the newline character.
- * @info: A parameter struct.
- *
- * This function is used to get a line of inputs,
- * excluding the newline character.
- * It returns the number of bytes read.
- *
- * Return: The number of bytes read
- */
-
-ssize_t get_input(info_t *info)
-{
-	static char *buf; /* the ';' command chain buffer */
-	static size_t i, j, len;
-	ssize_t r = 0;
-	char **buf_p = &(info->arg), *p;
-
-	_putchar(BUF_FLUSH);
-	r = input_buf(info, &buf, &len);
-	if (r == -1) /* EOF */
-		return (-1);
-	if (len) /* we have commands left in the chain buffer */
+	if (i < n)
 	{
-		j = i; /* init new iterator to current buf position */
-		p = buf + i; /* get pointer for return */
-
-		check_chain(info, buf, &j, i, len);
-		while (j < len) /* iterate to semicolon or end */
+		j = i;
+		while (j < n)
 		{
-			if (is_chain(info, buf, &j))
-				break;
+			dest[j] = '\0';
 			j++;
 		}
-
-		i = j + 1; /* increment past nulled ';'' */
-		if (i >= len) /* reached end of buffer? */
-		{
-			i = len = 0; /* reset position and length */
-			info->cmd_buf_type = CMD_NORM;
-		}
-
-		*buf_p = p; /* pass back pointer to current command position */
-		return (_strlen(p)); /* return length of current command */
 	}
-
-	*buf_p = buf; /* else not a chain, pass back buffer from _getline() */
-	return (r); /* return length of buffer from _getline() */
-}
-
-/**
- * read_buf - reads data into a buffer.
- * @info: A parameter struct
- * @buf: The buffer to read into.
- * @i: The size of the buffer.
- *
- * This function is responsible for reading data into the provided buffer.
- * It returns the value of 'r'.
- *
- * Return: The value of 'r'.
- */
-
-ssize_t read_buf(info_t *info, char *buf, size_t *i)
-{
-	ssize_t r = 0;
-
-	if (*i)
-		return (0);
-	r = read(info->readfd, buf, READ_BUF_SIZE);
-	if (r >= 0)
-		*i = r;
-	return (r);
-}
-
-/**
- * _getline - reads the next line of input from STDIN.
- * @info: A parameter struct
- * @ptr: the address of a pointer to a buffer, either preallocated or NULL.
- * @length: The size of the preallocated 'ptr' buffer if not NULL.
- *
- * This function is used to read the next line of input from STDIN.
- * It returns 's'.
- *
- * Return: 's', the string representing the line of input
- */
-
-int _getline(info_t *info, char **ptr, size_t *length)
-{
-	static char buf[READ_BUF_SIZE];
-	static size_t i, len;
-	size_t k;
-	ssize_t r = 0, s = 0;
-	char *p = NULL, *new_p = NULL, *c;
-
-	p = *ptr;
-	if (p && length)
-		s = *length;
-	if (i == len)
-		i = len = 0;
-
-	r = read_buf(info, buf, &len);
-	if (r == -1 || (r == 0 && len == 0))
-		return (-1);
-
-	c = _strchr(buf + i, '\n');
-	k = c ? 1 + (unsigned int)(c - buf) : len;
-	new_p = _realloc(p, s, s ? s + k : k + 1);
-	if (!new_p) /* MALLOC FAILURE! */
-		return (p ? free(p), -1 : -1);
-
-	if (s)
-		_strncat(new_p, buf + i, k - i);
-	else
-		_strncpy(new_p, buf + i, k - i + 1);
-
-	s += k - i;
-	i = k;
-	p = new_p;
-
-	if (length)
-		*length = s;
-	*ptr = p;
 	return (s);
 }
 
 /**
- * sigintHandler - blocks the Ctrl-C signal.
- * @sig_num: the signal number.
+ * _strncat - Concatenates two strings
+ * @dest: The first string
+ * @src: The second string
+ * @n: The maximum number of bytes to be used
  *
- * This function serves as a signal handler for Ctrl-C,
- * effectively blocking its behavior
- * It has a void return type.
+ * This function appends the characters from the source string to the end of
+ * the destination string, using at most 'n' bytes
+ * It returns the concatenated string
+ *
+ * Return: The concatenated string
  */
 
-void sigintHandler(__attribute__((unused))int sig_num)
+char *_strncat(char *dest, char *src, int n)
 {
-	_puts("\n");
-	_puts("$ ");
-	_putchar(BUF_FLUSH);
+	int i, j;
+	char *s = dest;
+
+	i = 0;
+	j = 0;
+	while (dest[i] != '\0')
+		i++;
+	while (src[j] != '\0' && j < n)
+	{
+		dest[i] = src[j];
+		i++;
+		j++;
+	}
+	if (j < n)
+		dest[i] = '\0';
+	return (s);
+}
+
+/**
+ * _strchr - Locates a character in a string
+ * @s: The string to be searched
+ * @c: The character to locate
+ *
+ * This function searches the given string for the first-
+ * occurrence of the specified character
+ * It returns a pointer to the memory area containing that
+ * character within the string
+ *
+ * Return: A pointer to the memory area in 's' containing the-
+ * character 'c', or NULL if not found
+ */
+
+char *_strchr(char *s, char c)
+{
+	do {
+		if (*s == c)
+			return (s);
+	} while (*s++ != '\0');
+
+	return (NULL);
 }

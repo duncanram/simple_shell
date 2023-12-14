@@ -1,116 +1,140 @@
 #include "shell.h"
 
 /**
- * _myenv - Displays the current environment variables
- * @info: A structure containing potential argument. This structure helps
- *        maintain a constant function prototype
+ * _myhistory - displays the history list, presenting 1 command per line-
+ *              each accompanied by a line number, starting from 0,
+ * @info: A structure containing potential arguments - Maintains a constant-
+ *        function prototype,
  *
- * This function is responsible for showing the current environment variables.
+ * this function is responsible for showing the history list of commands-
+ * displaying them individually with their corresponding line numbers-
+ * Starting from 0. The function always returns 0,
  *
- * Return: Always returns 0
+ * Return: Always return 0
  */
 
-int _myenv(info_t *info)
+int _myhistory(info_t *info)
 {
-	print_list_str(info->env);
+	print_list(info->history);
 	return (0);
 }
 
 /**
- * _getenv - retrieves the value of an environment variable.
- * @info: a structure containing potential argument. This structure helps
- *        maintain a consistent function prototype.
- * @name: The name of the environment variable.
+ * unset_alias - Removes an alias and sets it to a string
+ * @info: A struct containing relevant parameters
+ * @str: The string representing the alias
  *
- * This function is used to fetch the value associated with a
- * given environment variable.
+ * This function is used to unset an alias and then-
+ * assign it a new string value
  *
- * Return: The value of the specified environment variable
+ * Return: Always returns 0 upon success, and 1 upon encountering an error
  */
 
-char *_getenv(info_t *info, const char *name)
+int unset_alias(info_t *info, char *str)
 {
-	list_t *node = info->env;
-	char *p;
+	char *p, c;
+	int ret;
 
-	while (node)
-	{
-		p = starts_with(node->str, name);
-		if (p && *p)
-			return (p);
-		node = node->next;
-	}
-	return (NULL);
+	p = _strchr(str, '=');
+	if (!p)
+		return (1);
+	c = *p;
+	*p = 0;
+	ret = delete_node_at_index(&(info->alias),
+		get_node_index(info->alias, node_starts_with(info->alias, str, -1)));
+	*p = c;
+	return (ret);
 }
 
 /**
- * _mysetenv - initialize a new environment variable or
- * update an existing one.
- * @info: A structure containing potential arguments. This structure ensures
- *        a consistent function prototype.
+ * set_alias - Assigns an alias to a string
+ * @info: A parameter struct
+ * @str: The string representing the alias
  *
- * This function is responsible for initializing a new environment variable
- * and modifying an existing one. It always returns 0.
+ * This function is used to establish an alias and associate-
+ * it with a specified string.
  *
- * Return: Always returns 0
+ * Return: Always returns 0 upon success, and 1 upon encountering an error.
  */
 
-int _mysetenv(info_t *info)
+int set_alias(info_t *info, char *str)
 {
-	if (info->argc != 3)
-	{
-		_eputs("Incorrect number of arguements\n");
+	char *p;
+
+	p = _strchr(str, '=');
+	if (!p)
 		return (1);
-	}
-	if (_setenv(info, info->argv[1], info->argv[2]))
+	if (!*++p)
+		return (unset_alias(info, str));
+
+	unset_alias(info, str);
+	return (add_node_end(&(info->alias), str, 0) == NULL);
+}
+
+/**
+ * print_alias - Displays the content of an alias string-
+ * @node: The alias node to be printed-
+ *
+ * This function is designed to print out the content of-
+ * an alias node's string,
+ *
+ * Return: Always returns 0 upon success, and 1 upon encountering an error,
+ */
+
+int print_alias(list_t *node)
+{
+	char *p = NULL, *a = NULL;
+
+	if (node)
+	{
+		p = _strchr(node->str, '=');
+		for (a = node->str; a <= p; a++)
+		_putchar(*a);
+		_putchar('\'');
+		_puts(p + 1);
+		_puts("'\n");
 		return (0);
+	}
 	return (1);
 }
 
 /**
- * _myunsetenv - delete an environment variable.
- * @info: A structure containing potential arguments. This structure helps
- *        maintain a constant function prototype
+ * _myalias - Simulates the behavior of the alias built-in
+ * command (refer to 'man alias').
+ * @info: A structure containing potential arguments. This structure ensures-
+ *			a consistent function prototype,
  *
- * This function is utilized to remove an existing environment variable.
- * It always return 0.
+ * This function replicate the functionality of the alias-
+ * built-in command, allowing for the management of aliases.
+ * It always returns 0.
  *
- * Return: Always returns 0
+ * Return: Always returns 0-
  */
 
-int _myunsetenv(info_t *info)
+int _myalias(info_t *info)
 {
-	int i;
+	int i = 0;
+	char *p = NULL;
+	list_t *node = NULL;
 
 	if (info->argc == 1)
 	{
-		_eputs("Too few arguements.\n");
-		return (1);
+		node = info->alias;
+		while (node)
+		{
+			print_alias(node);
+			node = node->next;
+		}
+		return (0);
 	}
-	for (i = 1; i <= info->argc; i++)
-		_unsetenv(info, info->argv[i]);
+	for (i = 1; info->argv[i]; i++)
+	{
+		p = _strchr(info->argv[i], '=');
+		if (p)
+			set_alias(info, info->argv[i]);
+		else
+			print_alias(node_starts_with(info->alias, info->argv[i], '='));
+	}
 
-	return (0);
-}
-
-/**
- * populate_env_list - fills a linked list with environment variable data
- * @info: A structure containing potential arguments. This structure ensures
- *        a consistent function prototype.
- *
- * This function is responsible for populating a linked list with data from
- * environment variables. It always returns 0.
- *
- * Return: Always returns 0
- */
-
-int populate_env_list(info_t *info)
-{
-	list_t *node = NULL;
-	size_t i;
-
-	for (i = 0; environ[i]; i++)
-		add_node_end(&node, environ[i], 0);
-	info->env = node;
 	return (0);
 }

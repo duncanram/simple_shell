@@ -1,113 +1,89 @@
 #include "shell.h"
 
 /**
- * _myexit - terminates the shell execution
- * @info: structure containing potential arguments. This structure-
- * maintains a consistent function prototype
+ * interactive - Checks if the current shell is in interactive mode..
+ * returns true if shell is interactive mode..
+ * @info: struct address:.
  *
- * This function allows for the termination of the shell execution with-
- * a specified exit status. If info.argv[0] is not equal to "exit",-
- * the function exits with a status code of 0.
- *
- * Return: exit with the given exit status (0) if info.argv[0] is not "exit"
+ * Return: Returns 1 if interactive mode, otherwise, Return 0.
  */
 
-int _myexit(info_t *info)
+int interactive(info_t *info)
 {
-	int exitcheck;
-
-	if (info->argv[1]) /* If there is an exit arguement */
-	{
-		exitcheck = _erratoi(info->argv[1]);
-		if (exitcheck == -1)
-		{
-			info->status = 2;
-			print_error(info, "Illegal number: ");
-			_eputs(info->argv[1]);
-			_eputchar('\n');
-			return (1);
-		}
-		info->err_num = _erratoi(info->argv[1]);
-		return (-2);
-	}
-	info->err_num = -1;
-	return (-2);
+	return (isatty(STDIN_FILENO) && info->readfd <= 2);
 }
 
 /**
- * _mycd - Modifies the current directory of the process
- * @info: Structure containing potential arguments. This structure
- * ensures a consistent function prototype.
+ * is_delim - Determines if a given character is a delimiter..
+ * @c: The character to be checked..
+ * @delim: The string containing delimiters to compare against..
  *
- * This function facilitate the changing of the current directory
- * for the process. It returns 0 in all cases.
+ * This function examines whether the provided character is present in the-
+ * specified delimiter string, thus indicate if it serves as a delimiter..
  *
- * Return: Always returns 0
+ * Return: Returns 1 if the character is a delimiter/ otherwise returns 0.
  */
 
-int _mycd(info_t *info)
+int is_delim(char c, char *delim)
 {
-	char *s, *dir, buffer[1024];
-	int chdir_ret;
-
-	s = getcwd(buffer, 1024);
-	if (!s)
-		_puts("TODO: >>getcwd failure emsg here<<\n");
-	if (!info->argv[1])
-	{
-		dir = _getenv(info, "HOME=");
-		if (!dir)
-			chdir_ret = /* TODO: what should this be? */
-				chdir((dir = _getenv(info, "PWD=")) ? dir : "/");
-		else
-			chdir_ret = chdir(dir);
-	}
-	else if (_strcmp(info->argv[1], "-") == 0)
-	{
-		if (!_getenv(info, "OLDPWD="))
-		{
-			_puts(s);
-			_putchar('\n');
+	while (*delim)
+		if (*delim++ == c)
 			return (1);
-		}
-		_puts(_getenv(info, "OLDPWD=")), _putchar('\n');
-		chdir_ret = /* TODO: what should this be? */
-			chdir((dir = _getenv(info, "OLDPWD=")) ? dir : "/");
-	}
-	else
-		chdir_ret = chdir(info->argv[1]);
-	if (chdir_ret == -1)
-	{
-		print_error(info, "can't cd to ");
-		_eputs(info->argv[1]), _eputchar('\n');
-	}
-	else
-	{
-		_setenv(info, "OLDPWD", _getenv(info, "PWD="));
-		_setenv(info, "PWD", getcwd(buffer, 1024));
-	}
 	return (0);
 }
 
 /**
- * _myhelp - Provides assistance and information about commands.
- * @info: Structure containing potential arguments. This structure
- * maintains a consistent function prototype.
+ * _isalpha - Determines whether a given character is an alphabetic character.
+ * @c: The input character to be checked.
  *
- * This function aims to offer help or information about
- * commands within the context
- * of the current process. It returns 0 unconditionally.
+ * This function examines whether the provided character is an alphabetic
+ * character.
  *
- * Return: Always returns 0
+ * Return: Returns 1 if the character is alphabetic, otherwise returns 0.
  */
 
-int _myhelp(info_t *info)
+int _isalpha(int c)
 {
-	char **arg_array;
+	if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+		return (1);
+	else
+		return (0);
+}
 
-	arg_array = info->argv;
-	_puts("help call works. Function not yet implemented \n");
-	if (0)
-		_puts(*arg_array); /* temp att_unused workaround */
-	return (0);
+/**
+ * _atoi - converts a string to an integer..
+ * @s: The string to be converted..
+ *
+ * This function attempts to convert the provided string into an integer..
+ *
+ * Return: Returns 0 if no numbers are found in the string,-
+ * otherwise returns the converted integer..
+ */
+
+int _atoi(char *s)
+{
+	int i, sign = 1, flag = 0, output;
+	unsigned int result = 0;
+
+	for (i = 0; s[i] != '\0' && flag != 2; i++)
+	{
+		if (s[i] == '-')
+			sign *= -1;
+
+		if (s[i] >= '0' && s[i] <= '9')
+		{
+			flag = 1;
+			result *= 10;
+			result += (s[i] - '0');
+		}
+		else if (flag == 1)
+			flag = 2;
+	}
+
+	if (sign == -1)
+		output = -result;
+	else
+		output = result;
+
+	return (output);
 }

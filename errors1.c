@@ -1,93 +1,161 @@
 #include "shell.h"
 
 /**
- * _strncpy - copies a strings.
- * @dest: the destination string to copy to.
- * @src: The source string
- * @n: The number of characters to copy.
+ * _erratoi - converts a string to an integer
+ * @s: The string to be converted-
  *
- * This function copies up to 'n' characters from the source string to the
- * destination string. It returns the modified destination string.
+ * This function attempts to convert the provided string into an integer-
+ * If no numbers are found in the string, it returns 0. If an error occurs-
+ * during conversion, it returns -1.
  *
- * Return: The concatenated string
+ * Return: 0 if no numbers are found in the string-
+ * the converted number otherwise-
+ *         / -1 on error.
  */
 
-char *_strncpy(char *dest, char *src, int n)
+int _erratoi(char *s)
 {
-	int i, j;
-	char *s = dest;
+	int i = 0;
+	unsigned long int result = 0;
 
-	i = 0;
-	while (src[i] != '\0' && i < n - 1)
+	if (*s == '+')
+		s++;  /* TODO: why does this make main return 255? */
+	for (i = 0;  s[i] != '\0'; i++)
 	{
-		dest[i] = src[i];
-		i++;
-	}
-	if (i < n)
-	{
-		j = i;
-		while (j < n)
+		if (s[i] >= '0' && s[i] <= '9')
 		{
-			dest[j] = '\0';
-			j++;
+			result *= 10;
+			result += (s[i] - '0');
+			if (result > INT_MAX)
+				return (-1);
 		}
+		else
+			return (-1);
 	}
-	return (s);
+	return (result);
 }
 
 /**
- * _strncat - concatenates two strings.
- * @dest: The first string.
- * @src: The second string
- * @n: The maximum number of bytes to be used.
+ * print_error - Displays an error message
+ * @info: The parameter and return information struct
+ * @estr: String containing the specified error type
  *
- * This function appends the characters from the source string to the end of
- * the destination string, using at most 'n' bytes.
- * It returns the concatenated string.
+ * This function is responsible for printing out an error message based on-
+ * the provided error type string. It returns 0 in most cases but can return-
+ * -1 in case of an error
  *
- * Return: The concatenated string
+ * Return: 0 in normal cases, or -1 on error
  */
 
-char *_strncat(char *dest, char *src, int n)
+void print_error(info_t *info, char *estr)
 {
-	int i, j;
-	char *s = dest;
+	_eputs(info->fname);
+	_eputs(": ");
+	print_d(info->line_count, STDERR_FILENO);
+	_eputs(": ");
+	_eputs(info->argv[0]);
+	_eputs(": ");
+	_eputs(estr);
+}
 
-	i = 0;
-	j = 0;
-	while (dest[i] != '\0')
-		i++;
-	while (src[j] != '\0' && j < n)
+/**
+ * print_d - Prints a decimal (integer) number in base 10
+ * @input: The input number
+ * @fd: The file descriptor to write to
+ *
+ * Return: The number of characters printed
+ */
+
+int print_d(int input, int fd)
+{
+	int (*__putchar)(char) = _putchar;
+	int i, count = 0;
+	unsigned int _abs_, current;
+
+	if (fd == STDERR_FILENO)
+		__putchar = _eputchar;
+	if (input < 0)
 	{
-		dest[i] = src[j];
-		i++;
-		j++;
+		_abs_ = -input;
+		__putchar('-');
+		count++;
 	}
-	if (j < n)
-		dest[i] = '\0';
-	return (s);
+	else
+		_abs_ = input;
+	current = _abs_;
+	for (i = 1000000000; i > 1; i /= 10)
+	{
+		if (_abs_ / i)
+		{
+			__putchar('0' + current / i);
+			count++;
+		}
+		current %= i;
+	}
+	__putchar('0' + current);
+	count++;
+
+	return (count);
 }
 
 /**
- * _strchr - locates a character in a string.
- * @s: the string to be searched.
- * @c: The character to locate
+ * convert_number - conversion function similar to itoa
+ * @num: The number to be converted
+ * @base: The base for the conversion
+ * @flags: Flags related to the argument
  *
- * This function searches the given string for the first
- * occurrence of the specified character.
- * It returns a pointer to the memory area containing that
- * character within the string.
+ * This function converts the provided number into a string representation-
+ * using the specified base. It returns the resulting string
  *
- * Return: a pointer to the memory area in 's' containing the
- * character 'c', or NULL if not found
+ * Return: The converted string
  */
 
-char *_strchr(char *s, char c)
+char *convert_number(long int num, int base, int flags)
 {
-	do {
-		if (*s == c)
-			return (s);
-	} while (*s++ != '\0');
+	static char *array;
+	static char buffer[50];
+	char sign = 0;
+	char *ptr;
+	unsigned long n = num;
 
-	return (NULL);
+	if (!(flags & CONVERT_UNSIGNED) && num < 0)
+	{
+		n = -num;
+		sign = '-';
+
+	}
+	array = flags & CONVERT_LOWERCASE ? "0123456789abcdef" : "0123456789ABCDEF";
+	ptr = &buffer[49];
+	*ptr = '\0';
+
+	do	{
+		*--ptr = array[n % base];
+		n /= base;
+	} while (n != 0);
+
+	if (sign)
+		*--ptr = sign;
+	return (ptr);
+}
+
+/**
+ * remove_comments - replaces first instance of '#' in the string with '\0'
+ * @buf: The address of the string to modify
+ *
+ * This function is designed to replace the first occurrence of '#' in the-
+ * given string with a null terminator ('\0'). It always returns 0
+ *
+ * Return: Always returns 0
+ */
+
+void remove_comments(char *buf)
+{
+	int i;
+
+	for (i = 0; buf[i] != '\0'; i++)
+		if (buf[i] == '#' && (!i || buf[i - 1] == ' '))
+		{
+			buf[i] = '\0';
+			break;
+		}
 }
