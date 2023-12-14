@@ -1,99 +1,165 @@
 #include "shell.h"
 
 /**
- * _eputs - Outputs a given input string.
- * @str: The string to be printed.
+ * _erratoi - converts strings to integers.
  *
- * This function is used to display the provided string as output.
+ * @s: The string to be converted.
  *
- * Return: Nothing.
+ * Description: This function attempts to convert the provided string into an integer.
+ * If no numbers are found in the string, it returns 0. If an error occurred
+ * during conversion, it returns -1.
+ *
+ * Return: 0 if no numbers are found in the string,
+ *         the converted number otherwise,
+ *         or -1 on error (invalid input or overflow)
  */
-void _eputs(char *str)
+int _erratoi(char *s)
 {
     int i = 0;
+    unsigned long int result = 0;
 
-    if (!str)
-        return;
-    while (str[i] != '\0')
+    if (*s == '+')
+        s++; /* TODO: why does this make main return 255? */
+
+    for (i = 0; s[i] != '\0'; i++)
     {
-        _eputchar(str[i]);
-        i++;
+        if (s[i] >= '0' && s[i] <= '9')
+        {
+            result *= 10;
+            result += (s[i] - '0');
+            if (result > INT_MAX)
+                return (-1);
+        }
+        else
+            return (-1);
     }
+
+    return (result);
 }
 
 /**
- * _eputchar - Writes the character c to the standard error stream (stderr).
- * @c: The character to be printed.
+ * print_error - displays error messages.
  *
- * This function writes the provided character to the stderr stream. If the
- * buffer is full or a special flush character is encountered, the buffer is
- * written to stderr.
+ * @info: The parameter and return information struct.
+ * @estr: String containing the specified error type.
  *
- * Return: On success, it returns 1. On error, -1 is returned, and the errno
- *         variable is set accordingly.
+ * This function is responsible for printing out an error message based on
+ * the provided error type string. It returns 0 in most cases but can return
+ * -1 in case of an error.
+ *
+ * Return: 0 in normal cases, or -1 on error.
  */
-int _eputchar(char c)
+void print_error(info_t *info, char *estr)
 {
-    static int i;
-    static char buf[WRITE_BUF_SIZE];
-
-    if (c == BUF_FLUSH || i >= WRITE_BUF_SIZE)
-    {
-        write(2, buf, i);
-        i = 0;
-    }
-    if (c != BUF_FLUSH)
-        buf[i++] = c;
-    return (1);
-}
-/**
- * _putfd - Writes the character c to the specified file descriptor (fd).
- * @c: The character to be printed.
- * @fd: The file descriptor to write to.
- *
- * This function writes the provided character to
- * the specified file descriptor.
- * If the buffer is full or a flush condition is met,
- * the buffer is written to
- * the file descriptor.
- *
- * Return: On success, it returns 1. On error, -1 is returned, and the errno
- *         variable is set accordingly.
- */
-int _putfd(char c, int fd)
-{
-    static int i;
-    static char buf[WRITE_BUF_SIZE];
-
-    if (c == BUF_FLUSH || i >= WRITE_BUF_SIZE)
-    {
-        write(fd, buf, i);
-        i = 0;
-    }
-    if (c != BUF_FLUSH)
-        buf[i++] = c;
-    return (1);
+    _eputs(info->fname);
+    _eputs(": ");
+    print_d(info->line_count, STDERR_FILENO);
+    _eputs(": ");
+    _eputs(info->argv[0]);
+    _eputs(": ");
+    _eputs(estr);
 }
 
 /**
- * _putsfd - Writes the input string to the specified file descriptor (fd).
- * @str: The string to be printed.
- * @fd: The file descriptor to write to.
+ * print_d - prints a decimal (integer) number in base 10.
  *
- * This function outputs the provided string to the specified file descriptor.
- * It returns the number of characters written.
+ * @input: The input number.
+ * @fd: The file descriptor to write.
  *
- * Return: The number of characters written.
+ * Return: The number of characters printed.
  */
-int _putsfd(char *str, int fd)
+int print_d(int input, int fd)
 {
-    int i = 0;
+    int (*__putchar)(char) = _putchar;
+    int i, count = 0;
+    unsigned int _abs_, current;
 
-    if (!str)
-        return (0);
-    while (*str)
+    if (fd == STDERR_FILENO)
+        __putchar = _eputchar;
+
+    if (input < 0)
     {
-        i += _putfd(*str++, fd);
+        _abs_ = -input;
+        __putchar('-');
+        count++;
     }
-    return (i);
+    else
+        _abs_ = input;
+
+    current = _abs_;
+    for (i = 1000000000; i > 1; i /= 10)
+    {
+        if (_abs_ / i)
+        {
+            __putchar('0' + current / i);
+            count++;
+        }
+        current %= i;
+    }
+    __putchar('0' + current);
+    count++;
+
+    return (count);
+}
+
+/**
+ * convert_number - conversion function similar to itoa.
+ *
+ * @num: The number to be converted.
+ * @base: The base for the conversion.
+ * @flags: Flags related to the argument.
+ *
+ * This function converts the provided number into a string representation
+ * using the specified base. It returns the resulting string.
+ *
+ * Return: The converted string.
+ */
+char *convert_number(long int num, int base, int flags)
+{
+    static char buffer[BUFFER_SIZE];
+    char sign = 0;
+    char *ptr;
+    unsigned long n = num;
+
+    if (!(flags & CONVERT_UNSIGNED) && num < 0)
+    {
+        n = -num;
+        sign = '-';
+    }
+
+    ptr = &buffer[BUFFER_SIZE - 1];
+    *ptr = '\0';
+
+    do
+    {
+        *--ptr = (flags & CONVERT_LOWERCASE) ? "0123456789abcdef"[n % base] : "0123456789ABCDEF"[n % base];
+        n /= base;
+    } while (n != 0);
+
+    if (sign)
+        *--ptr = sign;
+
+    return (ptr);
+}
+
+/**
+ * remove_comments - replaces first instance of '#' in the string with '\0'.
+ *
+ * @buf: The address of the string to modify.
+ *
+ * This function is designed to replace the first occurrence of '#' in the
+ * given string with a null terminator ('\0'). It always returns 0.
+ *
+ * Return: Always returns 0.
+ */
+void remove_comments(char *buf)
+{
+    int i;
+
+    for (i = 0; buf[i] != '\0'; i++)
+        if (buf[i] == '#' && (!i || buf[i - 1] == ' '))
+        {
+            buf[i] = '\0';
+            break;
+        }
 }
