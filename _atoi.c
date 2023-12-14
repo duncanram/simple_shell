@@ -1,15 +1,15 @@
 #include "shell.h"
 
 /**
- * _myexit - Terminates the shell execution.
- * @info: structure containing potential arguments. This structure
+ * _myexit - terminates the shell execution
+ * @info: structure containing potential arguments. This structure-
  * maintains a consistent function prototype
  *
- * This function allows for the termination of the shell execution with
- * a specified exit status. If info.argv[0] is not equal to "exit",
+ * This function allows for the termination of the shell execution with-
+ * a specified exit status. If info.argv[0] is not equal to "exit",-
  * the function exits with a status code of 0.
  *
- * Return: Exit with the given exit status (0) if info.argv[0] is not "exit".
+ * Return: exit with the given exit status (0) if info.argv[0] is not "exit"
  */
 
 int _myexit(info_t *info)
