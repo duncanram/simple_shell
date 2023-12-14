@@ -26,9 +26,9 @@ void _eputs(char *str)
  * _eputchar - writes the character c to the standard error stream (stderr)
  * @c: The character to be printed
  *
- * This function writes the provided character to the stderr stream firstly. If the
- * buffer is full or a special flush character is encountered, the buffer is then
- * written to stderr.
+ * This function writes the provided character to the stderr stream firstly.
+ * If the buffer is full or a special flush character is encountered,
+ * the buffer is then written to stderr.
  *
  * Return: on success, it returns 1. On error, -1 is returned, and the errno
  *         variable is set accordingly.
