@@ -5,12 +5,11 @@
  *
  * @s: The string to be converted.
  *
- * Description: This function attempts to convert the provided string into an integer.
- * If no numbers are found in the string, it returns 0. If an error occurred
- * during conversion, it returns -1.
+ * Description: This function attempts to convert the provided string into
+ *              an integer. If no numbers are found in the string, it returns
+ *              0. If an error occurred during conversion, it returns -1.
  *
- * Return: 0 if no numbers are found in the string,
- *         the converted number otherwise,
+ * Return: 0 if no numbers are found, the converted number otherwise,
  *         or -1 on error (invalid input or overflow)
  */
 int _erratoi(char *s)
@@ -132,7 +131,8 @@ char *convert_number(long int num, int base, int flags)
 
     do
     {
-        *--ptr = (flags & CONVERT_LOWERCASE) ? "0123456789abcdef"[n % base] : "0123456789ABCDEF"[n % base];
+        *--ptr = (flags & CONVERT_LOWERCASE) ? "0123456789abcdef"[n % base]
+                                             : "0123456789ABCDEF"[n % base];
         n /= base;
     } while (n != 0);
 
