@@ -61,7 +61,7 @@ void print_error(info_t *info, char *estr)
 /**
  * print_d - prints a decimal (integer) number in base 10.
  * @input: The input number
- * @fd: The file descriptor to write 
+ * @fd: The file descriptor to write
  *
  * Return: The number of characters printed
  */
