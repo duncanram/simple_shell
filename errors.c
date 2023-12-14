@@ -5,12 +5,12 @@
  * @s: The string to be converted
  *
  * This function attempts to convert the provided string into an integer.
- * If no numbers are found in the string, it returns 0. If an error occurred
+ * If no numbers are found in the string, it returns 0. If an error occured
  * during conversion, it returns -1.
  *
  * Return: 0 if no numbers are found in the string,
  * the converted number otherwise,
- * or -1 on error
+ *         or -1 on error
  */
 
 int _erratoi(char *s)
@@ -19,7 +19,7 @@ int _erratoi(char *s)
     unsigned long int result = 0;
 
     if (*s == '+')
-        s++;  /* TODO: why does this make main return 255? */
+        s++; /* TODO: why does this make main return 255? */
     for (i = 0; s[i] != '\0'; i++)
     {
         if (s[i] >= '0' && s[i] <= '9')
@@ -122,7 +122,6 @@ char *convert_number(long int num, int base, int flags)
     {
         n = -num;
         sign = '-';
-
     }
     array = flags & CONVERT_LOWERCASE ? "0123456789abcdef" : "0123456789ABCDEF";
     ptr = &buffer[49];
@@ -159,13 +158,4 @@ void remove_comments(char *buf)
             buf[i] = '\0';
             break;
         }
-}
-
-int main()
-{
-    // Example usage
-    char str[] = "Hello World";
-    remove_whitespace_and_replace_spaces_with_tabs(str);
-    printf("%s\n", str);  // Output: "Hello\tWorld"
-    return 0;
 }
