@@ -1,4 +1,22 @@
- * @av: Argument vector
+#include "shell.h"
+
+/**
+ * clear_info - initializes fields of info_t struct to default values..
+ * @info: pointer to info_t struct..
+ */
+
+void clear_info(info_t *info)
+{
+	info->arg = NULL;
+	info->argv = NULL;
+	info->path = NULL;
+	info->argc = 0;
+}
+
+/**
+ * set_info - initializes fields of info_t struct using provided arguments..
+ * @info: pointer to info_t struct..
+ * @av: argument vector..
  */
 
 void set_info(info_t *info, char **av)
@@ -29,8 +47,8 @@ void set_info(info_t *info, char **av)
 
 /**
  * free_info - frees memory allocated for fields in info_t struct.
- * @info: Pointer to info_t struct
- * @all: 1 if freeing all fields, 0 otherwise.
+ * @info: pointer to info_t struct..
+ * @all: 1 if freeing all fields, 0 otherwise
  */
 
 void free_info(info_t *info, int all)
